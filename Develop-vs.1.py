@@ -1,4 +1,6 @@
 import pygame,sys
+pygame.font.init()
+pygame.font.get_fonts()
 
 #color
 black = (255,255,255)
@@ -54,8 +56,7 @@ class Player:
             if not self.left and not self.right:
                 screen.blit(char,(self.x, self.y))
         self.hitbox = [self.x+10, self.y+10, 45, 55]
-        pygame.draw.rect(screen,(255,0,0),self.hitbox,1)
-
+        
 class Projectile:
 
     def __init__ (self, x, y, color, radius, facing):
@@ -92,6 +93,11 @@ class Enemy:
         self.position = 1
         self.interval_enemy = self.speed * self.position
         self.hitbox = [self.x+10, self.y+10, 45, 55]
+        self.health = 0
+        self.health_green = [self.x, self.y-20 , 20, 50]
+        self.health_red = [self.x, self.y-20 , 20, 50]
+        self.health_bar = 0
+        self.visible = True
 
     def move_game(self):
         if self.interval_enemy > 0:
@@ -108,9 +114,12 @@ class Enemy:
                 self.walkCount = 0
 
     def draw(self,screen):
+        self.health_green = [self.x, self.y-20 , 50, 20]
+        self.health_red = [self.x, self.y-20 , 50 - self.health_bar, 20]
+        pygame.draw.rect(screen,(255,0,0),self.health_green)
+        pygame.draw.rect(screen,(0,255,0),self.health_red)
         if self.walkCount +1 >= 33:
             self.walkCount = 0
-
         if self.interval_enemy >= 1:
             screen.blit(Enemy.walkRight[self.walkCount//3],(self.x,self.y))
             self.walkCount += 1
@@ -118,20 +127,24 @@ class Enemy:
             screen.blit(Enemy.walkleft[self.walkCount // 3], (self.x, self.y))
             self.walkCount += 1
         self.hitbox = [self.x+10, self.y+10, 45, 55]
-        pygame.draw.rect(screen, (255, 0, 0), self.hitbox, 1)
-
+        
     def hit(self):
         print("adaw")
-
-
+        
+        
 def redrawGameWindow():
     screen.blit(bg,(0,0))
     game.screen(screen)
-    goblin.draw(screen)
+    if goblin.visible:
+        text = font_game.render("Score "+ str(score),1,(255,255,255))
+        goblin.draw(screen)
+        screen.blit(text,(0,0))
     for bullet in bullets:
         bullet.makeCircle(screen)
     pygame.display.update()
 
+score = 0
+font_game = pygame.font.Font(pygame.font.get_default_font(),32)
 game = Player(200, 400, 64, 64)
 goblin = Enemy(200,400,64,64,64,700,8)
 loading_bullet = 0
@@ -159,6 +172,10 @@ while True:
             if bullet.x + bullet.radius > goblin.hitbox[0] and bullet.x - bullet.radius < goblin.hitbox[0] + goblin.hitbox[2]:
                 goblin.hit()
                 bullets.remove(bullet)
+                score += 1
+                goblin.health_bar = score * 5 * 0.5
+                if goblin.health_bar > 50:
+                    goblin.visible = False
 
         if bullet.x < screen_width and bullet.x >0:
             bullet.x += bullet.vel
