@@ -69,6 +69,8 @@ class Player:
         self.y = 410
         self.walkCount = 0
         pygame.font.get_fonts()
+        self.jump = False
+        self.jump_count = 10
         font_score =pygame.font.SysFont('freesansbold.tff', 32)
         text_font = font_score.render("-5",1,(255,255,255))
         screen.blit(text_font,(screen_width/2-(text_font.get_width()/2),screen_height/2 -(text_font.get_height()/2)))
@@ -153,6 +155,10 @@ class Enemy:
         
     def hit(self):
         print("adaw")
+    
+    def hit_player(self,screen):
+        self.x = 350
+        self.y = 410
         
         
 def redrawGameWindow():
@@ -178,7 +184,9 @@ clock = pygame.time.Clock()
 
 while True:
     if -1 * game.hitbox[3] < game.hitbox[1]-goblin.hitbox[1] <= game.hitbox[3] and -1 * game.hitbox[2] < game.hitbox[0]-goblin.hitbox[0] <= game.hitbox[2]:
-        game.hit(screen)
+        if goblin.visible:
+            game.hit(screen)
+            goblin.hit_player(screen)
 
     
     if loading_bullet < 3:
