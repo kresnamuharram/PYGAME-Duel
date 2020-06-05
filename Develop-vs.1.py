@@ -1,4 +1,5 @@
 import pygame,sys
+pygame.init()
 pygame.font.init()
 pygame.font.get_fonts()
 
@@ -19,6 +20,12 @@ walkLeft = [pygame.image.load('L1.png'),pygame.image.load('L2.png'),pygame.image
 char = pygame.image.load('standing.png')
 bg = pygame.image.load('bg.jpg')
 ball = pygame.image.load('ball.png')
+
+#sound
+bulletsound = pygame.mixer.Sound("bullet.wav")
+hitsound = pygame.mixer.Sound("hit.wav")
+music = pygame.mixer.music.load('music.mp3')
+pygame.mixer.music.play(-1)
 
 
 class Player:
@@ -56,7 +63,23 @@ class Player:
             if not self.left and not self.right:
                 screen.blit(char,(self.x, self.y))
         self.hitbox = [self.x+10, self.y+10, 45, 55]
-        
+
+    def hit(self, screen):
+        self.x = 60
+        self.y = 410
+        self.walkCount = 0
+        pygame.font.get_fonts()
+        font_score =pygame.font.SysFont('freesansbold.tff', 32)
+        text_font = font_score.render("-5",1,(255,255,255))
+        screen.blit(text_font,(screen_width/2-(text_font.get_width()/2),screen_height/2 -(text_font.get_height()/2)))
+        pygame.display.update()
+        i = 0
+        while i<100:
+            pygame.time.delay(10)
+            i += 1
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    i = 301
 class Projectile:
 
     def __init__ (self, x, y, color, radius, facing):
@@ -146,7 +169,7 @@ def redrawGameWindow():
 score = 0
 font_game = pygame.font.Font(pygame.font.get_default_font(),32)
 game = Player(200, 400, 64, 64)
-goblin = Enemy(200,400,64,64,64,700,8)
+goblin = Enemy(400,400,64,64,64,700,8)
 loading_bullet = 0
 bullets = []
 
@@ -154,7 +177,10 @@ pygame.init()
 clock = pygame.time.Clock()
 
 while True:
+    if -1 * game.hitbox[3] < game.hitbox[1]-goblin.hitbox[1] <= game.hitbox[3] and -1 * game.hitbox[2] < game.hitbox[0]-goblin.hitbox[0] <= game.hitbox[2]:
+        game.hit(screen)
 
+    
     if loading_bullet < 3:
         loading_bullet += 1
     else:
@@ -168,14 +194,16 @@ while True:
     goblin.move_game()
 
     for bullet in bullets:
-        if bullet.y-bullet.radius <= goblin.hitbox[1]+goblin.hitbox[3] and bullet.y >= goblin.hitbox[1]:
-            if bullet.x + bullet.radius > goblin.hitbox[0] and bullet.x - bullet.radius < goblin.hitbox[0] + goblin.hitbox[2]:
-                goblin.hit()
-                bullets.remove(bullet)
-                score += 1
-                goblin.health_bar = score * 5 * 0.5
-                if goblin.health_bar > 50:
-                    goblin.visible = False
+        if goblin.visible:    
+            if bullet.y-bullet.radius <= goblin.hitbox[1]+goblin.hitbox[3] and bullet.y >= goblin.hitbox[1]:
+                if bullet.x + bullet.radius > goblin.hitbox[0] and bullet.x - bullet.radius < goblin.hitbox[0] + goblin.hitbox[2]:
+                    goblin.hit()
+                    hitsound.play()
+                    bullets.remove(bullet)
+                    score += 1
+                    goblin.health_bar = score * 5 * 0.5
+                    if goblin.health_bar > 50:
+                        goblin.visible = False
 
         if bullet.x < screen_width and bullet.x >0:
             bullet.x += bullet.vel
@@ -185,6 +213,7 @@ while True:
 
     if keys[pygame.K_SPACE] and loading_bullet == 0:
         loading_bullet = 1
+        bulletsound.play()
         if game.left:
             facing = -1
         else:
